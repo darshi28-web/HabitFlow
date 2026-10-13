@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="HabitFlow - Modern, responsive daily habit tracker with streaks, weekly analytics, calendar heatmap, and local storage.">
+  <title>HabitFlow — Daily Habit Tracker & Analytics</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Canvas Confetti -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Ambient glowing backdrop blobs -->
+  <div class="ambient-glow glow-top-left" aria-hidden="true"></div>
+  <div class="ambient-glow glow-bottom-right" aria-hidden="true"></div>
+  <div class="ambient-glow glow-center" aria-hidden="true"></div>
+
+  <!-- Main App Wrapper -->
+  <div class="app-layout">
+    <!-- Top Navigation Header -->
+    <header class="app-header">
+      <div class="header-container">
+        <div class="brand-group">
+          <div class="brand-logo">
+            <i data-lucide="sparkles" class="logo-icon"></i>
+          </div>
+          <div class="brand-text">
+            <div class="brand-title-wrap">
+              <h1 class="brand-title">Habit<span class="gradient-text">Flow</span></h1>
+              <span class="version-tag">PRO</span>
+            </div>
+            <p class="brand-subtitle">Build habits, ignite consistency</p>
+          </div>
+        </div>
+
+        <div class="header-center">
+          <div class="date-chip" id="currentDateBadge">
+            <i data-lucide="calendar" class="chip-icon"></i>
+            <span id="headerDateText">Today, Oct 13, 2026</span>
+          </div>
+        </div>
+
+        <div class="header-actions">
+          <button id="soundToggleBtn" class="icon-button" title="Toggle Sound Effects" aria-label="Toggle Sound Effects">
+            <i data-lucide="volume-2" id="soundIcon"></i>
+          </button>
+          <button id="resetDemoBtn" class="secondary-button" title="Seed or Reset Demo Habits">
+            <i data-lucide="refresh-cw"></i>
+            <span>Demo Data</span>
+          </button>
+          <button id="openNewHabitModalBtn" class="primary-button" id="addNewHabitBtn">
+            <i data-lucide="plus"></i>
+            <span>New Habit</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="dashboard-main">
+      <!-- Top Stats Overview Grid -->
+      <section class="stats-overview-grid" aria-label="Habit Progress Overview">
+        <!-- Daily Progress Card -->
+        <div class="stat-card stat-progress-card glass-panel">
+          <div class="stat-card-header">
+            <div class="stat-title-group">
+              <span class="stat-label">Today's Progress</span>
+              <h2 class="stat-value" id="dailyProgressPercent">0%</h2>
+            </div>
+            <div class="stat-icon-badge purple-glow">
+              <i data-lucide="target"></i>
+            </div>
+          </div>
+          <div class="progress-bar-track">
+            <div class="progress-bar-fill" id="dailyProgressBar" style="width: 0%"></div>
+          </div>
+          <div class="stat-footer">
+            <span class="stat-meta" id="dailyCompletedCount">0 of 0 habits completed</span>
+            <span class="stat-status-badge" id="dailyStatusBadge">Let's start! ✨</span>
+          </div>
+        </div>
+
+        <!-- Current Streak Card -->
+        <div class="stat-card glass-panel">
+          <div class="stat-card-header">
+            <div class="stat-title-group">
+              <span class="stat-label">Active Streak</span>
+              <h2 class="stat-value" id="currentStreakDisplay">0 <span class="stat-unit">days</span></h2>
+            </div>
+            <div class="stat-icon-badge orange-glow">
+              <i data-lucide="flame" class="flame-animate"></i>
+            </div>
+          </div>
+          <div class="stat-sparkle-meter">
+            <div class="spark-dots" id="streakDots">
+              <span class="dot active"></span>
+              <span class="dot active"></span>
+              <span class="dot"></span>
+              <span class="dot"></span>
+              <span class="dot"></span>
+            </div>
+          </div>
+          <div class="stat-footer">
+            <span class="stat-meta" id="streakSubtitle">Keep the flame alive today</span>
+            <span class="stat-status-badge streak-badge" id="streakStatus">🔥 Heating Up</span>
+          </div>
+        </div>
+
+        <!-- Best Streak Card -->
+        <div class="stat-card glass-panel">
+          <div class="stat-card-header">
+            <div class="stat-title-group">
+              <span class="stat-label">Longest Streak</span>
+              <h2 class="stat-value" id="longestStreakDisplay">0 <span class="stat-unit">days</span></h2>
+            </div>
+            <div class="stat-icon-badge amber-glow">
+              <i data-lucide="trophy"></i>
+            </div>
+          </div>
+          <div class="stat-meter-subtext">
+            <span>Personal record consistency</span>
+          </div>
+          <div class="stat-footer">
+            <span class="stat-meta" id="bestStreakMeta">All-time champion run</span>
+            <span class="stat-status-badge record-badge">🏆 Record</span>
+          </div>
+        </div>
+
+        <!-- Weekly Completion Rate Card -->
+        <div class="stat-card glass-panel">
+          <div class="stat-card-header">
+            <div class="stat-title-group">
+              <span class="stat-label">7-Day Consistency</span>
+              <h2 class="stat-value" id="weeklyAverageRate">0%</h2>
+            </div>
+            <div class="stat-icon-badge emerald-glow">
+              <i data-lucide="trending-up"></i>
+            </div>
+          </div>
+          <div class="stat-meter-subtext">
+            <span id="weeklyCompletionsCount">0 completions this week</span>
+          </div>
+          <div class="stat-footer">
+            <span class="stat-meta">Past 7 days performance</span>
+            <span class="stat-status-badge success-badge" id="consistencyBadge">Strong Pace</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Dashboard Body: Left Habits List, Right Analytics & Calendar -->
+      <div class="dashboard-columns">
+        <!-- LEFT: Habits Routine Management -->
+        <section class="habits-section glass-panel" aria-label="Habit Management">
+          <div class="section-header-bar">
+            <div class="section-header-title">
+              <div class="title-with-pill">
+                <h2>Today's Routine</h2>
+                <span class="count-badge" id="habitsCountBadge">0</span>
+              </div>
+              <p class="section-desc">Check off what you have achieved today</p>
+            </div>
+
+            <!-- Quick Add Habit Button for Mobile / Section -->
+            <button id="quickAddBtn" class="primary-button compact">
+              <i data-lucide="plus"></i>
+              <span>Add Habit</span>
+            </button>
+          </div>
+
+          <!-- Controls Bar: Search & Status Filters -->
+          <div class="habits-controls-bar">
+            <!-- Search Filter -->
+            <div class="search-input-wrap">
+              <i data-lucide="search" class="search-icon"></i>
+              <input type="text" id="habitSearchInput" placeholder="Filter habits by name..." autocomplete="off">
+              <button id="clearSearchBtn" class="clear-search-btn hidden" aria-label="Clear search">
+                <i data-lucide="x"></i>
+              </button>
+            </div>
+
+            <!-- Status Tabs -->
+            <div class="filter-tabs" id="statusFilterTabs" role="tablist">
+              <button class="filter-tab active" data-filter="all" role="tab">All</button>
+              <button class="filter-tab" data-filter="pending" role="tab">To-Do</button>
+              <button class="filter-tab" data-filter="completed" role="tab">Completed</button>
+            </div>
+          </div>
+
+          <!-- Category Chips -->
+          <div class="category-chips-scroll" id="categoryChips">
+            <button class="category-chip active" data-category="all">
+              <span>All Categories</span>
+            </button>
+            <button class="category-chip" data-category="Health">
+              <span class="chip-dot dot-health"></span>
+              <span>Health</span>
+            </button>
+            <button class="category-chip" data-category="Fitness">
+              <span class="chip-dot dot-fitness"></span>
+              <span>Fitness</span>
+            </button>
+            <button class="category-chip" data-category="Mindfulness">
+              <span class="chip-dot dot-mind"></span>
+              <span>Mindfulness</span>
+            </button>
+            <button class="category-chip" data-category="Productivity">
+              <span class="chip-dot dot-prod"></span>
+              <span>Productivity</span>
+            </button>
+            <button class="category-chip" data-category="Learning">
+              <span class="chip-dot dot-learn"></span>
+              <span>Learning</span>
+            </button>
+            <button class="category-chip" data-category="Creative">
+              <span class="chip-dot dot-creative"></span>
+              <span>Creative</span>
+            </button>
+          </div>
+
+          <!-- Habit List Container -->
+          <div class="habits-list" id="habitsListContainer">
+            <!-- Habit Cards will be dynamically injected here -->
+          </div>
+
+          <!-- Empty State (When no habits exist or match) -->
+          <div class="empty-state-card hidden" id="emptyStateCard">
+            <div class="empty-icon-wrap">
+              <i data-lucide="sparkles" class="empty-icon"></i>
+            </div>
+            <h3 id="emptyStateTitle">No habits found</h3>
+            <p id="emptyStateDesc">Add your first daily habit to start tracking your streak and progress!</p>
+            <button class="primary-button" id="emptyStateActionBtn">
+              <i data-lucide="plus"></i>
+              <span>Create Your First Habit</span>
+            </button>
+          </div>
+        </section>
+
+        <!-- RIGHT: Weekly Analytics & Calendar View -->
+        <aside class="analytics-sidebar">
+          <!-- Weekly Analytics Card -->
+          <section class="analytics-card glass-panel" aria-label="Weekly Performance">
+            <div class="card-header-row">
+              <div>
+                <h3 class="panel-title">Weekly Progress</h3>
+                <p class="panel-subtitle">Last 7 days completion rate</p>
+              </div>
+              <div class="chart-legend-badge">
+                <span class="legend-dot"></span>
+                <span>Completed %</span>
+              </div>
+            </div>
+
+            <!-- Weekly Bar Chart -->
+            <div class="weekly-chart-wrapper">
+              <div class="weekly-bars-container" id="weeklyBarsContainer">
+                <!-- 7 Daily Bars injected here -->
+              </div>
+            </div>
+
+            <div class="weekly-summary-pill">
+              <i data-lucide="zap" class="pill-icon"></i>
+              <span id="weeklyInsightText">You're completing 80% of your habits this week! Great rhythm.</span>
+            </div>
+          </section>
+
+          <!-- Interactive Calendar Card -->
+          <section class="calendar-card glass-panel" aria-label="Habit Calendar Heatmap">
+            <div class="card-header-row calendar-header">
+              <div>
+                <h3 class="panel-title">Habit Calendar</h3>
+                <p class="panel-subtitle">Consistency & completion history</p>
+              </div>
+              <div class="calendar-nav-buttons">
+                <button class="icon-nav-btn" id="prevMonthBtn" title="Previous Month" aria-label="Previous Month">
+                  <i data-lucide="chevron-left"></i>
+                </button>
+                <span class="calendar-month-label" id="calendarMonthLabel">October 2026</span>
+                <button class="icon-nav-btn" id="nextMonthBtn" title="Next Month" aria-label="Next Month">
+                  <i data-lucide="chevron-right"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Calendar Days Header -->
+            <div class="calendar-grid-weekdays">
+              <span>Mo</span>
+              <span>Tu</span>
+              <span>We</span>
+              <span>Th</span>
+              <span>Fr</span>
+              <span>Sa</span>
+              <span>Su</span>
+            </div>
+
+            <!-- Calendar Days Cells Container -->
+            <div class="calendar-grid-cells" id="calendarCellsContainer">
+              <!-- Calendar day buttons injected by JS -->
+            </div>
+
+            <!-- Heatmap Intensity Legend -->
+            <div class="heatmap-legend">
+              <span class="legend-text">Less</span>
+              <div class="legend-scale">
+                <span class="heat-chip level-0" title="0% completed"></span>
+                <span class="heat-chip level-1" title="1-25% completed"></span>
+                <span class="heat-chip level-2" title="26-50% completed"></span>
+                <span class="heat-chip level-3" title="51-75% completed"></span>
+                <span class="heat-chip level-4" title="76-100% completed"></span>
+              </div>
+              <span class="legend-text">More</span>
+            </div>
+          </section>
+
+          <!-- Motivation & Quote Box -->
+          <section class="motivation-box glass-panel">
+            <div class="quote-header">
+              <i data-lucide="quote" class="quote-icon"></i>
+              <span class="quote-tag">Daily Spark</span>
+            </div>
+            <p class="quote-text" id="dailyQuoteText">
+              "We are what we repeatedly do. Excellence, then, is not an act, but a habit."
+            </p>
+            <span class="quote-author" id="dailyQuoteAuthor">— Will Durant</span>
+          </section>
+        </aside>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <div class="footer-container">
+        <p class="footer-copy">HabitFlow © 2026 • Crafted with passion for mindful productivity</p>
+        <div class="footer-links">
+          <button class="text-link-btn" id="exportDataBtn">Export Data</button>
+          <span class="divider">•</span>
+          <button class="text-link-btn" id="importDataBtn">Import Data</button>
+          <span class="divider">•</span>
+          <button class="text-link-btn" id="clearAllDataBtn">Clear All</button>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Hidden File Input for Data Import -->
+  <input type="file" id="importFileInput" accept=".json" style="display:none;">
+
+  <!-- MODAL: Add / Edit Habit -->
+  <div class="modal-overlay hidden" id="habitModalOverlay">
+    <div class="modal-dialog glass-panel" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <div class="modal-icon-badge" id="modalHeaderBadge">
+            <i data-lucide="plus-circle" id="modalHeaderIcon"></i>
+          </div>
+          <div>
+            <h2 class="modal-title" id="modalTitle">Create New Habit</h2>
+            <p class="modal-subtitle">Set your intention and start building momentum</p>
+          </div>
+        </div>
+        <button class="modal-close-btn" id="closeHabitModalBtn" aria-label="Close modal">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+
+      <form id="habitForm" class="modal-form">
+        <input type="hidden" id="habitEditId" value="">
+
+        <!-- Habit Title -->
+        <div class="form-group">
+          <label for="habitNameInput" class="form-label">Habit Name <span class="required-star">*</span></label>
+          <div class="input-with-icon">
+            <i data-lucide="edit-3" class="input-icon"></i>
+            <input type="text" id="habitNameInput" placeholder="e.g. Read 20 pages, Morning Run, Meditate..." required maxlength="60">
+          </div>
+        </div>
+
+        <!-- Category & Icon Selection -->
+        <div class="form-row two-col">
+          <div class="form-group">
+            <label for="habitCategorySelect" class="form-label">Category</label>
+            <div class="select-wrapper">
+              <select id="habitCategorySelect" required>
+                <option value="Health">Health & Wellness</option>
+                <option value="Fitness">Fitness & Exercise</option>
+                <option value="Mindfulness">Mindfulness & Mental</option>
+                <option value="Productivity">Productivity & Work</option>
+                <option value="Learning">Learning & Reading</option>
+                <option value="Creative">Creative & Arts</option>
+                <option value="Lifestyle">Lifestyle & Habits</option>
+              </select>
+              <i data-lucide="chevron-down" class="select-arrow"></i>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Icon Emoji</label>
+            <div class="icon-picker-grid" id="iconPickerGrid">
+              <!-- Preset icons selectable by click -->
+              <button type="button" class="icon-pick-btn active" data-icon="💧">💧</button>
+              <button type="button" class="icon-pick-btn" data-icon="🏃">🏃</button>
+              <button type="button" class="icon-pick-btn" data-icon="📚">📚</button>
+              <button type="button" class="icon-pick-btn" data-icon="🧘">🧘</button>
+              <button type="button" class="icon-pick-btn" data-icon="💻">💻</button>
+              <button type="button" class="icon-pick-btn" data-icon="🥗">🥗</button>
+              <button type="button" class="icon-pick-btn" data-icon="💤">💤</button>
+              <button type="button" class="icon-pick-btn" data-icon="🎨">🎨</button>
+              <button type="button" class="icon-pick-btn" data-icon="🚴">🚴</button>
+              <button type="button" class="icon-pick-btn" data-icon="☀️">☀️</button>
+            </div>
+            <input type="hidden" id="selectedIconInput" value="💧">
+          </div>
+        </div>
+
+        <!-- Color Accent Picker -->
+        <div class="form-group">
+          <label class="form-label">Color Accent</label>
+          <div class="color-swatches" id="colorSwatches">
+            <button type="button" class="color-swatch active" data-color="#8b5cf6" style="--swatch:#8b5cf6;" title="Electric Purple"></button>
+            <button type="button" class="color-swatch" data-color="#ec4899" style="--swatch:#ec4899;" title="Rose Pink"></button>
+            <button type="button" class="color-swatch" data-color="#06b6d4" style="--swatch:#06b6d4;" title="Cyan Neon"></button>
+            <button type="button" class="color-swatch" data-color="#10b981" style="--swatch:#10b981;" title="Emerald Green"></button>
+            <button type="button" class="color-swatch" data-color="#f59e0b" style="--swatch:#f59e0b;" title="Amber Orange"></button>
+            <button type="button" class="color-swatch" data-color="#6366f1" style="--swatch:#6366f1;" title="Indigo Glow"></button>
+          </div>
+          <input type="hidden" id="selectedColorInput" value="#8b5cf6">
+        </div>
+
+        <!-- Optional Description / Goal -->
+        <div class="form-group">
+          <label for="habitDescInput" class="form-label">Notes or Target (Optional)</label>
+          <input type="text" id="habitDescInput" placeholder="e.g. 10 mins before bed, or 2 liters per day" maxlength="90">
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="secondary-button" id="cancelHabitModalBtn">Cancel</button>
+          <button type="submit" class="primary-button" id="saveHabitBtn">
+            <i data-lucide="check"></i>
+            <span id="saveHabitBtnText">Save Habit</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: Calendar Day Details Modal -->
+  <div class="modal-overlay hidden" id="dayDetailModalOverlay">
+    <div class="modal-dialog glass-panel day-detail-modal" role="dialog" aria-modal="true">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <div class="modal-icon-badge purple-glow">
+            <i data-lucide="calendar"></i>
+          </div>
+          <div>
+            <h2 class="modal-title" id="dayDetailTitle">Day History</h2>
+            <p class="modal-subtitle" id="dayDetailSubtitle">Habit completion on this date</p>
+          </div>
+        </div>
+        <button class="modal-close-btn" id="closeDayDetailModalBtn" aria-label="Close modal">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+
+      <div class="day-detail-summary-bar">
+        <div class="day-stat-chip">
+          <span class="day-stat-num" id="dayDetailPercent">0%</span>
+          <span class="day-stat-sub">Completed</span>
+        </div>
+        <div class="day-stat-chip">
+          <span class="day-stat-num" id="dayDetailCount">0/0</span>
+          <span class="day-stat-sub">Habits</span>
+        </div>
+        <div class="day-stat-chip" id="dayDetailStatusChip">
+          <span class="status-indicator"></span>
+          <span id="dayDetailStatusText">Active</span>
+        </div>
+      </div>
+
+      <div class="day-habits-list" id="dayDetailList">
+        <!-- Habits for this specific date rendered here -->
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="secondary-button" id="doneDayDetailModalBtn">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Delete Confirmation Modal -->
+  <div class="modal-overlay hidden" id="confirmDeleteModalOverlay">
+    <div class="modal-dialog glass-panel confirm-modal" role="dialog" aria-modal="true">
+      <div class="modal-header">
+        <div class="modal-icon-badge red-glow">
+          <i data-lucide="alert-triangle"></i>
+        </div>
+        <div class="modal-title-wrap">
+          <h2 class="modal-title">Delete Habit?</h2>
+          <p class="modal-subtitle">This habit and all its logged history will be permanently deleted.</p>
+        </div>
+      </div>
+      <div class="confirm-habit-preview" id="deleteHabitPreview">
+        <!-- Habit name preview -->
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="secondary-button" id="cancelDeleteBtn">Cancel</button>
+        <button type="button" class="danger-button" id="confirmDeleteBtn">
+          <i data-lucide="trash-2"></i>
+          <span>Delete Habit</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toastContainer" aria-live="polite"></div>
+
+  <!-- Custom JavaScript -->
+  <script src="app.js"></script>
+</body>
+</html>
